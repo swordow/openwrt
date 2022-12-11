@@ -1,5 +1,4 @@
 #!/bin/sh
-. /lib/netifd/mac80211.sh
 
 append DRIVERS "mac80211"
 
@@ -11,7 +10,7 @@ lookup_phy() {
 	local devpath
 	config_get devpath "$device" path
 	[ -n "$devpath" ] && {
-		phy="$(mac80211_path_to_phy "$devpath")"
+		phy="$(iwinfo nl80211 phyname "path=$devpath")"
 		[ -n "$phy" ] && return
 	}
 
@@ -133,6 +132,13 @@ get_band_defaults() {
 		mode_band="$band"
 		channel="$chan"
 		htmode="$mode"
+		if [ "$band" = "6g" ]
+		then
+			encryption=sae
+			key=12345678
+		else
+			encryption=none
+		fi
 	done
 }
 
@@ -158,10 +164,12 @@ detect_mac80211() {
 		channel=""
 		htmode=""
 		ht_capab=""
+		encryption=""
+		key=""
 
 		get_band_defaults "$dev"
 
-		path="$(mac80211_phy_to_path "$dev")"
+		path="$(iwinfo nl80211 path "$dev")"
 		if [ -n "$path" ]; then
 			dev_id="set wireless.radio${devidx}.path='$path'"
 		else
@@ -182,8 +190,11 @@ detect_mac80211() {
 			set wireless.default_radio${devidx}.network=lan
 			set wireless.default_radio${devidx}.mode=ap
 			set wireless.default_radio${devidx}.ssid=OpenWrt
-			set wireless.default_radio${devidx}.encryption=none
+			set wireless.default_radio${devidx}.encryption=${encryption}
 EOF
+		[ -n "$key" ] && {
+			uci -q set wireless.default_radio${devidx}.key=${key}
+		}
 		uci -q commit wireless
 
 		devidx=$(($devidx + 1))
