@@ -6,6 +6,38 @@
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/image.mk
 
+ifeq ($(SUBTARGET),mt7986)
+define Image/Build/SDImage
+	./make_bpi-r3_bundle_image.sh 	$(KDIR)/mtk-bpi-r3-SD-WAN1-SFP1.img \
+                               		$(STAGING_DIR_IMAGE)/GPT_SD \
+                               		$(STAGING_DIR_IMAGE)/bl2_sd.img \
+                               		$(STAGING_DIR_IMAGE)/fip_sd.bin \
+                               		$(KDIR)/BPI-R3-SD-WAN1-SFP1-kernel.bin \
+                               		$(KDIR)/root.squashfs
+	./make_bpi-r3_bundle_image.sh 	$(KDIR)/mtk-bpi-r3-SD-WAN1-RJ45.img \
+                               		$(STAGING_DIR_IMAGE)/GPT_SD \
+                               		$(STAGING_DIR_IMAGE)/bl2_sd.img \
+                               		$(STAGING_DIR_IMAGE)/fip_sd.bin \
+                               		$(KDIR)/BPI-R3-SD-WAN1-RJ45-kernel.bin \
+                               		$(KDIR)/root.squashfs
+endef
+
+define Image/Build/EMMCImage
+	./make_bpi-r3_bundle_image.sh 	$(KDIR)/mtk-bpi-r3-EMMC-WAN1-SFP1.img \
+                               		$(STAGING_DIR_IMAGE)/GPT_EMMC \
+                               		$(STAGING_DIR_IMAGE)/bl2_emmc.img \
+                               		$(STAGING_DIR_IMAGE)/fip_emmc.bin \
+                               		$(KDIR)/BPI-R3-EMMC-WAN1-SFP1-kernel.bin \
+                               		$(KDIR)/root.squashfs
+	./make_bpi-r3_bundle_image.sh 	$(KDIR)/mtk-bpi-r3-EMMC-WAN1-RJ45.img \
+                               		$(STAGING_DIR_IMAGE)/GPT_EMMC \
+                               		$(STAGING_DIR_IMAGE)/bl2_emmc.img \
+                               		$(STAGING_DIR_IMAGE)/fip_emmc.bin \
+                               		$(KDIR)/BPI-R3-EMMC-WAN1-RJ45-kernel.bin \
+                               		$(KDIR)/root.squashfs
+endef
+endif
+
 define Build/sysupgrade-emmc
 	rm -f $@.recovery
 	mkfs.fat -C $@.recovery 3070
@@ -34,6 +66,8 @@ endef
 include $(SUBTARGET).mk
 
 define Image/Build
+	$(call Image/Build/SDImage,$(1))
+	$(call Image/Build/EMMCImage,$(1))
 	$(call Image/Build/$(1),$(1))
 endef
 
