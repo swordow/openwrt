@@ -60,11 +60,12 @@ Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
  static int gd5fxgq4uexxg_ecc_get_status(struct spinand_device *spinand,
  					u8 status)
  {
-@@ -222,6 +251,24 @@ static const struct spinand_info gigadev
+@@ -266,7 +295,27 @@ static const struct spinand_info gigadev
  		     SPINAND_HAS_QE_BIT,
  		     SPINAND_ECCINFO(&gd5fxgq4xa_ooblayout,
  				     gd5fxgq4xa_ecc_get_status)),
-+	SPINAND_INFO("GD5F4GQ4RC", 0xa468,
++	SPINAND_INFO("GD5F4GQ4RC",
++		     SPINAND_ID(SPINAND_READID_METHOD_OPCODE, 0xa4, 0x68),
 +		     NAND_MEMORG(1, 4096, 256, 64, 2048, 40, 1, 1, 1),
 +		     NAND_ECCREQ(8, 512),
 +		     SPINAND_INFO_OP_VARIANTS(&read_cache_variants_f,
@@ -73,7 +74,8 @@ Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
 +		     SPINAND_HAS_QE_BIT,
 +		     SPINAND_ECCINFO(&gd5fxgq4xc_oob_256_ops,
 +				     gd5fxgq4ufxxg_ecc_get_status)),
-+	SPINAND_INFO("GD5F4GQ4UC", 0xb468,
++	SPINAND_INFO("GD5F4GQ4UC",
++		     SPINAND_ID(SPINAND_READID_METHOD_OPCODE, 0xb4, 0x68),
 +		     NAND_MEMORG(1, 4096, 256, 64, 2048, 40, 1, 1, 1),
 +		     NAND_ECCREQ(8, 512),
 +		     SPINAND_INFO_OP_VARIANTS(&read_cache_variants_f,
@@ -82,6 +84,7 @@ Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
 +		     SPINAND_HAS_QE_BIT,
 +		     SPINAND_ECCINFO(&gd5fxgq4xc_oob_256_ops,
 +				     gd5fxgq4ufxxg_ecc_get_status)),
- 	SPINAND_INFO("GD5F1GQ4UExxG", 0xd1,
+ 	SPINAND_INFO("GD5F1GQ4UExxG",
+ 	             SPINAND_ID(SPINAND_READID_METHOD_OPCODE_ADDR, 0xd1),
  		     NAND_MEMORG(1, 2048, 128, 64, 1024, 20, 1, 1, 1),
  		     NAND_ECCREQ(8, 512),
