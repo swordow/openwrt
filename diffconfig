@@ -1,12 +1,20 @@
 CONFIG_TARGET_mediatek=y
 CONFIG_TARGET_mediatek_filogic=y
 CONFIG_TARGET_mediatek_filogic_DEVICE_bananapi_bpi-r3=y
+CONFIG_IB=y
+CONFIG_IB_STANDALONE=y
+CONFIG_MAKE_TOOLCHAIN=y
+# CONFIG_PACKAGE_u-boot-mt7986_bananapi_bpi-r3-emmc is not set
+# CONFIG_PACKAGE_u-boot-mt7986_bananapi_bpi-r3-nor is not set
+# CONFIG_PACKAGE_u-boot-mt7986_bananapi_bpi-r3-snand is not set
 CONFIG_TARGET_EXT4_BLOCKSIZE=4096
 CONFIG_TARGET_EXT4_BLOCKSIZE_4K=y
 CONFIG_TARGET_EXT4_JOURNAL=y
 CONFIG_TARGET_EXT4_RESERVED_PCT=5
-# CONFIG_TARGET_IMAGES_GZIP is not set
 CONFIG_TARGET_ROOTFS_EXT4FS=y
 CONFIG_TARGET_ROOTFS_PARTSIZE=8192
 CONFIG_TARGET_ROOTFS_PERSIST_VAR=y
+CONFIG_PACKAGE_trusted-firmware-a-mt7986-emmc-ddr4=y
+CONFIG_PACKAGE_trusted-firmware-a-mt7986-nor-ddr4=y
+CONFIG_PACKAGE_trusted-firmware-a-mt7986-spim-nand-ddr4=y
 # CONFIG_TARGET_IMAGES_GZIP is not set
