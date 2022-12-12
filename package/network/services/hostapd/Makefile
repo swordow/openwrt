@@ -1,17 +1,19 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2006-2014 OpenWrt.org
 #
-# Copyright (C) 2006-2021 OpenWrt.org
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hostapd
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=41
 
 PKG_SOURCE_URL:=http://w1.fi/hostap.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2022-06-02
-PKG_SOURCE_VERSION:=4383528e01955d995d3b3db201e4c0f9840e8236
-PKG_MIRROR_HASH:=1b533287661d4877d56aca8a5b2a53d84d2a90eebe246d8d9b3adf943da7f0a1
+PKG_SOURCE_DATE:=2020-06-08
+PKG_SOURCE_VERSION:=5a8b366233f5585e68a4ffbb604fbb4a848eb325
+PKG_MIRROR_HASH:=1b2a4947034142587a3f81eac2ea27dd64650e77f8943d973623b47533be2393
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=BSD-3-Clause
