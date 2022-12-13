@@ -12,12 +12,11 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 
 --- a/drivers/net/ethernet/mediatek/Makefile
 +++ b/drivers/net/ethernet/mediatek/Makefile
-@@ -4,4 +4,4 @@
- #
+@@ -5,3 +5,3 @@
  
- obj-$(CONFIG_NET_MEDIATEK_SOC)                 += mtk_eth.o
--mtk_eth-y := mtk_eth_soc.o mtk_sgmii.o mtk_eth_path.o mtk_ppe.o
-+mtk_eth-y := mtk_eth_soc.o mtk_sgmii.o mtk_eth_path.o mtk_ppe.o mtk_ppe_debugfs.o mtk_offload.o
+ obj-$(CONFIG_NET_MEDIATEK_SOC)			+= mtk_eth.o
+-mtk_eth-y := mtk_eth_soc.o mtk_sgmii.o mtk_eth_path.o mtk_eth_dbg.o mtk_eth_reset.o mtk_ppe.o
++mtk_eth-y := mtk_eth_soc.o mtk_sgmii.o mtk_eth_path.o mtk_eth_dbg.0 mtk_eth_reset.o mtk_ppe.o mtk_ppe_debugfs.o mtk_offload.o
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 @@ -20,6 +20,8 @@
@@ -30,9 +29,9 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  
  #include "mtk_eth_soc.h"
 @@ -1362,8 +1364,12 @@ static int mtk_poll_rx(struct napi_struc
- 		    (trxd.rxd2 & RX_DMA_VTAG))
- 			__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q),
- 					       RX_DMA_VID(trxd.rxd3));
+ 			hw_lro_flush_stats_update(ring->ring_no, &trxd);
+ 		}
+ 
 -		skb_record_rx_queue(skb, 0);
 -		napi_gro_receive(napi, skb);
 +		if (mtk_offload_check_rx(eth, skb, trxd.rxd4) == 0) {

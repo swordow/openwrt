@@ -20,12 +20,13 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	  MediaTek SoC family.
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -1260,12 +1260,13 @@ static void mtk_update_rx_cpu_idx(struct
+@@ -1260,13 +1260,14 @@ static void mtk_update_rx_cpu_idx(struct
  static int mtk_poll_rx(struct napi_struct *napi, int budget,
  		       struct mtk_eth *eth)
  {
 +	struct dim_sample dim_sample = {};
- 	struct mtk_rx_ring *ring;
+ 	struct mtk_napi *rx_napi = container_of(napi, struct mtk_napi, napi);
+ 	struct mtk_rx_ring *ring = rx_napi->rx_ring;
  	int idx;
  	struct sk_buff *skb;
  	u8 *data, *new_data;
@@ -33,8 +34,8 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 -	int done = 0;
 +	int done = 0, bytes = 0;
  
- 	while (done < budget) {
- 		struct net_device *netdev;
+ 	if (unlikely(!ring))
+ 		goto rx_done;
 @@ -1342,6 +1343,7 @@ static int mtk_poll_rx(struct napi_struc
  		else
  			skb_checksum_none_assert(skb);
@@ -79,22 +80,24 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	if (mtk_queue_stopped(eth) &&
  	    (atomic_read(&ring->free_count) > ring->thresh))
  		mtk_wake_queue(eth);
-@@ -2164,6 +2179,7 @@ static irqreturn_t mtk_handle_irq_rx(int
+@@ -2164,8 +2179,9 @@ static irqreturn_t mtk_handle_irq_rx(int
  {
- 	struct mtk_eth *eth = _eth;
+ 	struct mtk_napi *rx_napi = priv;
+ 	struct mtk_eth *eth = rx_napi->eth;
+ 	struct mtk_rx_ring *ring = rx_napi->rx_ring;
  
 +	eth->rx_events++;
- 	if (likely(napi_schedule_prep(&eth->rx_napi))) {
- 		__napi_schedule(&eth->rx_napi);
- 		mtk_rx_irq_disable(eth, MTK_RX_DONE_INT);
+ 	if (likely(napi_schedule_prep(&rx_napi->napi))) {
+		mtk_rx_irq_disable(eth, MTK_RX_DONE_INT(ring->ring_no));
+		__napi_schedule(&rx_napi->napi);
 @@ -2176,6 +2192,7 @@ static irqreturn_t mtk_handle_irq_tx(int
  {
  	struct mtk_eth *eth = _eth;
  
 +	eth->tx_events++;
  	if (likely(napi_schedule_prep(&eth->tx_napi))) {
- 		__napi_schedule(&eth->tx_napi);
  		mtk_tx_irq_disable(eth, MTK_TX_DONE_INT);
+ 		__napi_schedule(&eth->tx_napi);
 @@ -2352,6 +2369,9 @@ static int mtk_stop(struct net_device *d
  	napi_disable(&eth->tx_napi);
  	napi_disable(&eth->rx_napi);
@@ -167,9 +170,9 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +	dim->state = DIM_START_MEASURE;
 +}
 +
- static int mtk_hw_init(struct mtk_eth *eth)
+ static int mtk_napi_init(struct mtk_eth *eth)
  {
- 	int i, val, ret;
+ 	struct mtk_napi *rx_napi = &eth->rx_napi[0];
 @@ -2422,9 +2500,6 @@ static int mtk_hw_init(struct mtk_eth *e
  			goto err_disable_pm;
  		}
@@ -180,24 +183,24 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  		/* disable delay and normal interrupt */
  		mtk_tx_irq_disable(eth, ~0);
  		mtk_rx_irq_disable(eth, ~0);
-@@ -2463,11 +2538,10 @@ static int mtk_hw_init(struct mtk_eth *e
- 	/* Enable RX VLan Offloading */
- 	mtk_w32(eth, 1, MTK_CDMP_EG_CTRL);
+@@ -2463,10 +2538,9 @@ static int mtk_hw_init(struct mtk_eth *e
+	else
+		mtk_w32(eth, 0, MTK_CDMP_EG_CTRL);
  
--	/* enable interrupt delay for RX */
--	mtk_w32(eth, MTK_PDMA_DELAY_RX_DELAY, MTK_PDMA_DELAY_INT);
+-	/* enable interrupt delay for RX/TX */
+-	mtk_w32(eth, 0x8f0f8f0f, MTK_PDMA_DELAY_INT);
+-	mtk_w32(eth, 0x8f0f8f0f, MTK_QDMA_DELAY_INT);
 +	mtk_dim_rx(&eth->rx_dim.work);
 +	mtk_dim_tx(&eth->tx_dim.work);
  
- 	/* disable delay and normal interrupt */
--	mtk_w32(eth, 0, MTK_QDMA_DELAY_INT);
  	mtk_tx_irq_disable(eth, ~0);
  	mtk_rx_irq_disable(eth, ~0);
  
-@@ -2971,6 +3045,13 @@ static int mtk_probe(struct platform_dev
+@@ -2971,7 +3045,14 @@ static int mtk_probe(struct platform_dev
  	spin_lock_init(&eth->page_lock);
  	spin_lock_init(&eth->tx_irq_lock);
  	spin_lock_init(&eth->rx_irq_lock);
+	spin_lock_init(&eth->syscfg0_lock);
 +	spin_lock_init(&eth->dim_lock);
 +
 +	eth->rx_dim.mode = DIM_CQ_PERIOD_MODE_START_FROM_EQE;
@@ -221,7 +224,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 @@ -131,13 +132,18 @@
  
  /* PDMA Delay Interrupt Register */
- #define MTK_PDMA_DELAY_INT		0xa0c
+ #define MTK_PDMA_DELAY_INT		(PDMA_BASE + 0x20c)
 +#define MTK_PDMA_DELAY_RX_MASK		GENMASK(15, 0)
  #define MTK_PDMA_DELAY_RX_EN		BIT(15)
 -#define MTK_PDMA_DELAY_RX_PINT		4
@@ -241,25 +244,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +#define MTK_PDMA_DELAY_PTIME_MASK	0xff
  
  /* PDMA Interrupt Status Register */
- #define MTK_PDMA_INT_STATUS	0xa20
-@@ -219,6 +225,7 @@
- /* QDMA Interrupt Status Register */
- #define MTK_QDMA_INT_STATUS	0x1A18
- #define MTK_RX_DONE_DLY		BIT(30)
-+#define MTK_TX_DONE_DLY		BIT(28)
- #define MTK_RX_DONE_INT3	BIT(19)
- #define MTK_RX_DONE_INT2	BIT(18)
- #define MTK_RX_DONE_INT1	BIT(17)
-@@ -228,8 +235,7 @@
- #define MTK_TX_DONE_INT1	BIT(1)
- #define MTK_TX_DONE_INT0	BIT(0)
- #define MTK_RX_DONE_INT		MTK_RX_DONE_DLY
--#define MTK_TX_DONE_INT		(MTK_TX_DONE_INT0 | MTK_TX_DONE_INT1 | \
--				 MTK_TX_DONE_INT2 | MTK_TX_DONE_INT3)
-+#define MTK_TX_DONE_INT		MTK_TX_DONE_DLY
- 
- /* QDMA Interrupt grouping registers */
- #define MTK_QDMA_INT_GRP1	0x1a20
+ #define MTK_PDMA_INT_STATUS	(PDMA_BASE + 0x220)
 @@ -912,6 +918,18 @@ struct mtk_eth {
  
  	const struct mtk_soc_data	*soc;
