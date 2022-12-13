@@ -36,6 +36,6 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +			skb_set_hash(skb, hash, PKT_HASH_TYPE_L4);
 +		}
 +
- 		if (netdev->features & NETIF_F_HW_VLAN_CTAG_RX &&
- 		    (trxd.rxd2 & RX_DMA_VTAG))
- 			__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q),
+ 		if (netdev->features & NETIF_F_HW_VLAN_CTAG_RX) {
+ 			if (MTK_HAS_CAPS(eth->soc->caps, MTK_NETSYS_V2)) {
+ 				if (trxd.rxd3 & RX_DMA_VTAG_V2)
