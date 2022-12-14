@@ -5362,7 +5362,7 @@ CONFIG_DOVECOT_SQLITE=y
 CONFIG_DOVECOT_ICU=y
 # end of Select dovecot build options
 
-CONFIG_PACKAGE_dovecot-pigeonhole=y
+# CONFIG_PACKAGE_dovecot-pigeonhole is not set
 CONFIG_PACKAGE_dovecot-utils=y
 # CONFIG_PACKAGE_emailrelay is not set
 # CONFIG_PACKAGE_exim is not set
