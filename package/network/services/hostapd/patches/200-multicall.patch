@@ -1,13 +1,14 @@
 --- a/hostapd/Makefile
 +++ b/hostapd/Makefile
-@@ -1,6 +1,7 @@
- ALL=hostapd hostapd_cli
- CONFIG_FILE = .config
+@@ -1,6 +1,8 @@
+ ifndef CFLAGS
+ CFLAGS = -MMD -O2 -Wall -g
+ endif
  
 +-include $(if $(MULTICALL), ../wpa_supplicant/.config)
- include ../src/build.rules
- 
++
  ifdef LIBS
+ # If LIBS is set with some global build system defaults, clone those for
 @@ -199,7 +200,8 @@ endif
  
  ifdef CONFIG_NO_VLAN
@@ -37,8 +38,8 @@
  
  ifdef CONFIG_L2_PACKET
 @@ -1281,6 +1287,12 @@ install: $(addprefix $(DESTDIR)$(BINDIR)
- _OBJS_VAR := OBJS
- include ../src/objs.mk
+ 
+ BCHECK=../src/drivers/build.hostapd
  
 +hostapd_multi.a: $(BCHECK) $(OBJS)
 +	$(Q)$(CC) -c -o hostapd_multi.o -Dmain=hostapd_main $(CFLAGS) main.c
@@ -46,7 +47,7 @@
 +	@rm -f $@
 +	@$(AR) cr $@ hostapd_multi.o $(OBJS)
 +
- hostapd: $(OBJS)
+ hostapd: $(BCHECK) $(OBJS)
  	$(Q)$(CC) $(LDFLAGS) -o hostapd $(OBJS) $(LIBS)
  	@$(E) "  LD " $@
 @@ -1355,6 +1367,12 @@ include ../src/objs.mk
@@ -65,13 +66,13 @@
 --- a/wpa_supplicant/Makefile
 +++ b/wpa_supplicant/Makefile
 @@ -17,6 +17,7 @@ endif
- EXTRA_TARGETS=dynamic_eap_methods
- 
- CONFIG_FILE=.config
+ ifndef CFLAGS
+ CFLAGS = -MMD -O2 -Wall -g
+ endif
 +-include $(if $(MULTICALL),../hostapd/.config)
- include ../src/build.rules
  
  ifdef LIBS
+ # If LIBS is set with some global build system defaults, clone those for
 @@ -363,7 +364,9 @@ endif
  ifdef CONFIG_IBSS_RSN
  NEED_RSN_AUTHENTICATOR=y
@@ -130,8 +131,8 @@
  OBJS += ../src/ap/wpa_auth_ie.o
 @@ -1891,6 +1908,12 @@ wpa_priv: $(BCHECK) $(OBJS_priv)
  
- _OBJS_VAR := OBJS
- include ../src/objs.mk
+ $(OBJS_c) $(OBJS_t) $(OBJS_t2) $(OBJS) $(BCHECK) $(EXTRA_progs): .config
+ 
 +wpa_supplicant_multi.a: .config $(BCHECK) $(OBJS) $(EXTRA_progs)
 +	$(Q)$(CC) -c -o wpa_supplicant_multi.o -Dmain=wpa_supplicant_main $(CFLAGS) main.c
 +	@$(E) "  CC " $<

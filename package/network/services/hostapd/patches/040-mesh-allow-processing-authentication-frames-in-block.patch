@@ -29,6 +29,6 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 -			return;
 -		}
 -#endif /* CONFIG_MESH */
- #ifdef CONFIG_PASN
- 		if (auth_alg == WLAN_AUTH_PASN &&
- 		    (sta->flags & WLAN_STA_ASSOC)) {
+ 	} else {
+ #ifdef CONFIG_MESH
+ 		if (hapd->conf->mesh & MESH_ENABLED) {
