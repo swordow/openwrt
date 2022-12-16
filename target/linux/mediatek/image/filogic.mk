@@ -28,11 +28,11 @@ define Build/mt7986-gpt
 			-t 0xef	-N fip		-r	-p 4M@6656k \
 				-N recovery	-r	-p 32M@12M \
 		$(if $(findstring sdmmc,$1), \
-				-N install	-r	-p 20M@44M \
-			-t 0x2e -N production		-p $(CONFIG_TARGET_ROOTFS_PARTSIZE)M@64M \
+				-N install	-r	-p 20M@64M \
+			-t 0x2e -N production		-p $(CONFIG_TARGET_ROOTFS_PARTSIZE)M@128M \
 		) \
 		$(if $(findstring emmc,$1), \
-			-t 0x2e -N production		-p $(CONFIG_TARGET_ROOTFS_PARTSIZE)M@64M \
+			-t 0x2e -N production		-p $(CONFIG_TARGET_ROOTFS_PARTSIZE)M@128M \
 		)
 	$(call Build/check-file-exist,$@.tmp)
 	cat $@.tmp >> $@
