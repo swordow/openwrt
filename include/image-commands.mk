@@ -14,7 +14,6 @@ endef
 
 define Build/append-dtb
 	cat $(KDIR)/image-$(firstword $(DEVICE_DTS)).dtb >> $@
-	sync
 endef
 
 define Build/append-dtb-elf
@@ -26,7 +25,6 @@ endef
 
 define Build/append-kernel
 	dd if=$(IMAGE_KERNEL) >> $@
-	sync
 endef
 
 define Build/package-kernel-ubifs
@@ -39,126 +37,38 @@ define Build/package-kernel-ubifs
 endef
 
 define Build/append-image
-	@echo "[---Rise---] Checking $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(1)"
-	@echo "[---Rise---] Checking \(1\) ---> $(1)"
-	@echo "[---Rise---] Checking \(2\) ---> $(2)"
-	@echo "[---Rise---] Checking \(1.2\) --------> $(word 2,$(1))"
 	$(eval append_image_name=$(shell if [[ "$(word 2, $(1))" == "" ]];then echo "$(1)"; else echo "$(word 2,$(1))"; fi))
-	@echo "[---Rise---] append_image_name is $(append_image_name)"
-	@echo "[---Rise---] Checking $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(append_image_name)"
-	@if [[ ! -f $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(append_image_name) ]];then\
-		echo "[---Rise---] Build/append-image $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(append_image_name) not exists!";\
-		exit -1;\
-	else\
-		echo "=====================================================================================================\n\n";\
-		ls -alh $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(append_image_name);\
-		echo "=====================================================================================================\n\n";\
-	fi
-
+	$(call Build/check-file-exist, $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(append_image_name)) 
 	cp "$(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(append_image_name)" "$@.stripmeta"
-	@if [[ ! -f $@.stripmeta ]];then\
-		echo "[---Rise---] Build/append-image $@.stripmeta not exists!";\
-		exit -1;\
-	else\
-		echo "=====================================================================================================\n\n";\
-		ls -alh $@.stripmeta; \
-		echo "=====================================================================================================\n\n";\
-	fi
+	$(call Build/check-file-exist, $@.stripmeta) 
 	fwtool -s /dev/null -t "$@.stripmeta" || :
 	fwtool -i /dev/null -t "$@.stripmeta" || :
 	dd if="$@.stripmeta" >> "$@"
-	@if [[ ! -f $@ ]];then\
-		echo"[---Rise---] Build/append-image $@ not exists!";\
-		exit -1;\
-	else\
-		echo "=====================================================================================================\n\n";\
-		ls -alh $@; \
-		echo "=====================================================================================================\n\n";\
-	fi
+	$(call Build/check-file-exist, $@) 
 	rm "$@.stripmeta"
-	@echo "[---Rise---] append-image done!"
 endef
 
 ifdef IB
 define Build/append-image-stage
-	@echo "[---Rise---] Checking \(0\) ---> $(0)"
-	@echo "[---Rise---] Checking \(1\) ---> $(1)"
-	@echo "[---Rise---] Checking \(2\) ---> $(2)"  
-	@echo "[---Rise---] Checking \(1.2\) --------> $(word 2,$(1))"
 	$(eval stage_image_name=$(shell if [[ "$(word 2, $(1))" == "" ]];then echo "$(1)"; else echo "$(word 2,$(1))"; fi))
-	@echo "[---Rise---] stage_image_name is $(stage_image_name)"
-	@if [[ ! -f $(STAGING_DIR_IMAGE)/$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))-$(DEVICE_NAME)-$(stage_image_name) ]];then\
-		echo "[---Rise---] Build/append-image-stage $(STAGING_DIR_IMAGE)/$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))-$(DEVICE_NAME)-$(stage_image_name) not exists!";\
-		exit -1;\
-	else\
-		echo "=====================================================================================================\n\n";\
-		ls -alh $(STAGING_DIR_IMAGE)/$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))-$(DEVICE_NAME)-$(stage_image_name);\
-		echo "=====================================================================================================\n\n";\
-	fi
+	$(call Build/check-file-exist, $(STAGING_DIR_IMAGE)/$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))-$(DEVICE_NAME)-$(stage_image_name))  
 	dd if=$(STAGING_DIR_IMAGE)/$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))-$(DEVICE_NAME)-$(stage_image_name) >> $@
-	sync
-	@if [[ ! -f $@ ]];then\
-		echo"[---Rise---] Build/append-image-stage $@ not exists!";\
-		exit -1;\
-	else\
-		echo "=====================================================================================================\n\n";\
-		ls -alh $@; \
-		echo "=====================================================================================================\n\n";\
-	fi
-	@echo "[---Rise---] append-image-stage done!"
+	$(call Build/check-file-exist, $@) 
 endef
 else
 define Build/append-image-stage
 	$(eval stage_image_name=$(shell if [[ "$(word 2, $(1))" == "" ]];then echo "$(1)"; else echo "$(word 2,$(1))"; fi))
-	@echo "[---Rise---] Checking $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(1)"
-	@echo "[---Rise---] Checking BIN_DIR ---> $(BIN_DIR)"
-	@echo "[---Rise---] Checking DEVICE_IMAGE_PREFIX ---> $(DEVICE_IMG_PREFIX)"
-	@echo "[---Rise---] Checking \(0\) ---> $(0)"
-	@echo "[---Rise---] Checking \(1\) ---> $(1)"  
-	@echo "[---Rise---] Checking \(1.2\) --------> $(word 2,$(1))"
-	@echo "[---Rise---] stage_image_name is $(stage_image_name)"
-	@echo "[---Rise---] Checking $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(stage_image_name)"
-	@if [[ ! -f $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(stage_image_name) ]];then\
-		echo "[---Rise---] Build/append-image-stage $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(stage_image_name) not exists!";\
-		exit -1;\
-	else\
-		echo "=====================================================================================================\n\n";\
-		ls -alh $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(stage_image_name);\
-		echo "=====================================================================================================\n\n";\
-	fi
+	$(call Build/check-file-exist, $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(stage_image_name))  
 	cp "$(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(stage_image_name)" "$@.stripmeta"
-	@if [[ ! -f $@.stripmeta ]];then\
-		echo "[---Rise---] Build/append-image-stage $@.stripmeta not exists very fucking...!";\
-	else\
-		echo "=====================================================================================================\n\n";\
-		ls -alh $@.stripmeta; \
-		echo "=====================================================================================================\n\n";\
-	fi
+	$(call Build/check-file-exist, $@.stripmeta) 
 	fwtool -s /dev/null -t "$@.stripmeta" || :
 	fwtool -i /dev/null -t "$@.stripmeta" || :
 	mkdir -p "$(STAGING_DIR_IMAGE)"
-	@echo "[---Rise---] Build/append-image-stage dd stripmeta to $(STAGING_DIR_IMAGE)/$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))-$(DEVICE_NAME)-$(stage_image_name)"
 	dd if="$@.stripmeta" of="$(STAGING_DIR_IMAGE)/$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))-$(DEVICE_NAME)-$(stage_image_name)"
-	@if [[ ! -f $(STAGING_DIR_IMAGE)/$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))-$(DEVICE_NAME)-$(stage_image_name) ]];then\
-		echo "[---Rise---] Build/append-image-stage $(STAGING_DIR_IMAGE)/$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))-$(DEVICE_NAME)-$(stage_image_name) not exists!";\
-		exit -1;\
-	else\
-		echo "=====================================================================================================\n\n";\
-		ls -alh $(STAGING_DIR_IMAGE)/$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))-$(DEVICE_NAME)-$(stage_image_name); \
-		echo "=====================================================================================================\n\n";\
-	fi
+	$(call Build/check-file-exist, $(STAGING_DIR_IMAGE)/$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))-$(DEVICE_NAME)-$(stage_image_name)) 
 	dd if="$@.stripmeta" >> "$@"
-	sync
-	@if [[ ! -f $@ ]];then\
-		echo "[---Rise---] Build/append-image-stage $@ not exists!";\
-		exit -1;\
-	else\
-		echo "=====================================================================================================\n\n";\
-		ls -alh $@; \
-		echo "=====================================================================================================\n\n";\
-	fi
+	$(call Build/check-file-exist, $@) 
 	rm "$@.stripmeta"
-	@echo "[---Rise---] append-image-stage done!"
 endef
 endif
 
@@ -202,9 +112,7 @@ define Build/append-metadata
 endef
 
 define Build/append-rootfs
-	$(info "[---Rise---]--------------------------- Build/append-roots ---------------------------------")
 	dd if=$(IMAGE_ROOTFS) >> $@
-	sync
 	if [[ ! -f $@ ]];then
 		$(error  "$@ append failed!")
 		exit -1
@@ -219,7 +127,6 @@ define Build/append-squashfs-fakeroot-be
 		-noappend -root-owned -be -nopad -b 65536 \
 		$(if $(SOURCE_DATE_EPOCH),-fixed-time $(SOURCE_DATE_EPOCH))
 	cat $@.fakesquashfs >> $@
-	sync
 endef
 
 define Build/append-squashfs4-fakeroot
@@ -229,12 +136,10 @@ define Build/append-squashfs4-fakeroot
 		$@.fakefs $@.fakesquashfs \
 		-nopad -noappend -root-owned
 	cat $@.fakesquashfs >> $@
-	sync
 endef
 
 define Build/append-string
 	echo -n $(1) >> $@
-	sync
 endef
 
 define Build/append-ubi
@@ -249,7 +154,6 @@ define Build/append-ubi
 		$(if $(VID_HDR_OFFSET),-O $(VID_HDR_OFFSET)) \
 		$(UBINIZE_OPTS)
 	cat $@.tmp >> $@
-	sync
 	rm $@.tmp
 endef
 
@@ -267,7 +171,6 @@ endef
 
 define Build/append-uboot
 	dd if=$(UBOOT_PATH) >> $@
-	sync
 endef
 
 # append a fake/empty uImage header, to fool bootloaders rootfs integrity check
@@ -284,7 +187,6 @@ define Build/append-uImage-fakehdr
 		-s \
 		$@.fakehdr
 	cat $@.fakehdr >> $@
-	sync
 endef
 
 define Build/buffalo-dhp-image
@@ -320,19 +222,22 @@ define Build/buffalo-tag-dhp
 	mv $@.new $@
 endef
 
+define Build/check-file-exist
+	@if [[ ! -f $(1) ]];then\
+		echo "Error: $(1) does not exist!";\
+		exit -1;\
+	else\
+		echo "Check file OK => [ $$(ls -alh $(1)) ]";\
+	fi
+endef
+
 define Build/check-size
-	@echo "[---Rise---] CheckSize ------------------------------- $@ $(1) $(IMAGE_SIZE)............................."
 	@imagesize="$$(stat -c%s $@)"; \
 	limitsize="$$(($(subst k,* 1024,$(subst m, * 1024k,$(if $(1),$(1),$(IMAGE_SIZE))))))"; \
 	[ $$limitsize -ge $$imagesize ] || { \
 		echo "ERROR: Image file $@ is too big: $$imagesize > $$limitsize";\
 		exit 1;\
 	}
-	@if [[ $$? != 0 ]];then\
-		echo "[---Rise---] checksize failed!";\
-		exit -1;\
-	fi
-	@echo "[---Rise---] CheckSize Done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 endef
 
 define Build/copy-file
@@ -361,13 +266,11 @@ define Build/elecom-wrc-gs-factory
 	$(eval version=$(word 2,$(1)))
 	$(eval hash_opt=$(word 3,$(1)))
 	$(MKHASH) md5 $(hash_opt) $@ >> $@
-	sync
 	( \
 		echo -n "ELECOM $(product) v$(version)" | \
 			dd bs=32 count=1 conv=sync; \
 		dd if=$@; \
 	) > $@.new
-	sync
 	mv $@.new $@
 endef
 
@@ -544,11 +447,9 @@ endef
 
 define Build/pad-extra
 	dd if=/dev/zero bs=$(1) count=1 >> $@
-	sync
 endef
 
 define Build/pad-offset
-	@echo "[---Rise---] ----------------------------------------------------------- pad-offset $@ $@.new"
 	let \
 		size="$$(stat -c%s $@)" \
 		pad="$(subst k,* 1024,$(word 1, $(1)))" \
@@ -556,24 +457,10 @@ define Build/pad-offset
 		pad="(pad - ((size + offset) % pad)) % pad" \
 		newsize='size + pad'; \
 		dd if=$@ of=$@.new bs=$$newsize count=1 conv=sync
-	@if [[ -f $@.new ]];then\
-		echo "[---Rise---] $@.new not exists!!!!!!";\
-		exit -1;\
-	else\
-		echo "[---Rise---]===========================================================================\\n\\n";\
-		ls -alh $@.new;\
-		echo "[---Rise---]===========================================================================\\n\\n";\
-	fi
+	
+	$(call build/check-file-exist,$@.new)
 	mv $@.new $@
-	@if [[ -f $@ ]];then\
-		echo "[---Rise---] $@ not exists!!!!!!";\
-		exit -1;\
-	else\
-		echo "[---Rise---]===========================================================================\\n\\n";\
-		ls -alh $@.new;\
-		echo "[---Rise---]===========================================================================\\n\\n";\
-	fi
-	@echo "[---Rise--] ----------------------------------------------------------- pad-offset $@ $@.new done!"
+	$(call build/check-file-exist,$@)
 endef
 
 define Build/pad-rootfs
@@ -582,9 +469,7 @@ define Build/pad-rootfs
 endef
 
 define Build/pad-to
-	@echo "[---Rise---] Build/pad-to $@ $(1), call Image/pad-to"
 	$(call Image/pad-to,$@,$(1))
-	@echo "[---Rise---] Build/pad-to $@ $(1) done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 endef
 
 define Build/patch-cmdline
@@ -697,7 +582,6 @@ define Build/tplink-v2-image
 		-T $(TPLINK_HVERSION) -V "ver. 2.0" -a 0x4 -j \
 		-k $(IMAGE_KERNEL) -r $(IMAGE_ROOTFS) -o $@.new $(1)
 	cat $@.new >> $@
-	sync
 	rm -rf $@.new
 endef
 

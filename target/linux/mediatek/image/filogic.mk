@@ -9,9 +9,7 @@ define Image/Prepare
 endef
 
 define Build/bl2
-	@echo "[---Rise---] Build/bl2 mt7986-$1-bl2.img >> $@"
 	cat $(STAGING_DIR_IMAGE)/mt7986-$1-bl2.img >> $@
-	@echo "[---Rise---] Done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 endef
 
 define Build/bl31-uboot
@@ -19,10 +17,6 @@ define Build/bl31-uboot
 endef
 
 define Build/mt7986-gpt
-	@echo "[---Rise---] Makeing mt7986 gpt............................................................."
-	@if [[ ! -f $@ ]];then\
-		echo "[---Rise---] $@ not exists!";\
-	fi
 	cp $@ $@.tmp 2>/dev/null || true
 	ptgen -g -o $@.tmp -a 1 -l 1024 \
 		$(if $(findstring sdmmc,$1), \
@@ -40,17 +34,10 @@ define Build/mt7986-gpt
 		$(if $(findstring emmc,$1), \
 			-t 0x2e -N production		-p $(CONFIG_TARGET_ROOTFS_PARTSIZE)M@64M \
 		)
-	@if [[ ! -f $@.tmp ]];then\
-		echo "[---Rise---] $@.tmp not exists!";\
-		exit -1;\
-	fi
+	$(call Build/check-file-exist,$@.tmp)
 	cat $@.tmp >> $@
-	@if [[ ! -f $@ ]];then\
-		echo "[---Rise---] $@ not exists!";\
-		exit -1;\
-	fi
+	$(call Build/check-file-exist,$@)
 	rm $@.tmp
-	@echo "[---Rise---] mt7986 gpt done!"
 endef
 
 define Device/bananapi_bpi-r3
