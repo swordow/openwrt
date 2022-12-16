@@ -28,11 +28,11 @@ define Build/mt7986-gpt
 			-t 0xef	-N fip		-r	-p 4M@6656k \
 				-N recovery	-r	-p 32M@12M \
 		$(if $(findstring sdmmc,$1), \
-				-N install	-r	-p 20M@64M \
-			-t 0x2e -N production		-p $(CONFIG_TARGET_ROOTFS_PARTSIZE)M@128M \
+				-N install	-r	-p 20M@128M \
+			-t 0x2e -N production		-p $(CONFIG_TARGET_ROOTFS_PARTSIZE)M@256M \
 		) \
 		$(if $(findstring emmc,$1), \
-			-t 0x2e -N production		-p $(CONFIG_TARGET_ROOTFS_PARTSIZE)M@128M \
+			-t 0x2e -N production		-p $(CONFIG_TARGET_ROOTFS_PARTSIZE)M@256M \
 		)
 	$(call Build/check-file-exist,$@.tmp)
 	cat $@.tmp >> $@
@@ -65,19 +65,19 @@ define Device/bananapi_bpi-r3
 				   pad-to 17k | bl2 sdmmc-ddr4 |\
 				   pad-to 6656k | bl31-uboot bananapi_bpi-r3-sdmmc |\
 				$(if $(CONFIG_TARGET_ROOTFS_INITRAMFS),\
-				   pad-to 12M | append-image-stage initramfs-recovery.itb | check-size 64m |\
+				   pad-to 12M | append-image-stage initramfs-recovery.itb | check-size 128m |\
 				) \
-				   pad-to 64M | bl2 spim-nand-ddr4 |\
-				   pad-to 65M | bl31-uboot bananapi_bpi-r3-snand |\
-				   pad-to 69M | bl2 nor-ddr4 |\
-				   pad-to 70M | bl31-uboot bananapi_bpi-r3-nor |\
-				   pad-to 71M | bl2 emmc-ddr4 |\
-				   pad-to 72M | bl31-uboot bananapi_bpi-r3-emmc |\
-				   pad-to 76M | mt7986-gpt emmc |\
+				   pad-to 128M | bl2 spim-nand-ddr4 |\
+				   pad-to 129M | bl31-uboot bananapi_bpi-r3-snand |\
+				   pad-to 133M | bl2 nor-ddr4 |\
+				   pad-to 134M | bl31-uboot bananapi_bpi-r3-nor |\
+				   pad-to 135M | bl2 emmc-ddr4 |\
+				   pad-to 136M | bl31-uboot bananapi_bpi-r3-emmc |\
+				   pad-to 140M | mt7986-gpt emmc |\
 				$(if $(CONFIG_TARGET_ROOTFS_SQUASHFS),\
-				   pad-to 128M | append-image squashfs-sysupgrade.itb | check-size | gzip \
+				   pad-to 256M | append-image squashfs-sysupgrade.itb | check-size | gzip \
 				)
-  IMAGE_SIZE := $$(shell expr 128 + $$(CONFIG_TARGET_ROOTFS_PARTSIZE))m
+  IMAGE_SIZE := $$(shell expr 256 + $$(CONFIG_TARGET_ROOTFS_PARTSIZE))m
   KERNEL			:= kernel-bin | gzip
   KERNEL_INITRAMFS := kernel-bin | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd | pad-to 64k
