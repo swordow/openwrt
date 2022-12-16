@@ -9,7 +9,9 @@ define Image/Prepare
 endef
 
 define Build/bl2
+	@echo "[---Rise---] Build/bl2 mt7986-$1-bl2.img >> $@"
 	cat $(STAGING_DIR_IMAGE)/mt7986-$1-bl2.img >> $@
+	@echo "[---Rise---] Done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 endef
 
 define Build/bl31-uboot
@@ -17,6 +19,10 @@ define Build/bl31-uboot
 endef
 
 define Build/mt7986-gpt
+	@echo "[---Rise---] Makeing mt7986 gpt............................................................."
+	@if [[ ! -f $@ ]];then\
+		echo "[---Rise---] $@ not exists!";\
+	fi
 	cp $@ $@.tmp 2>/dev/null || true
 	ptgen -g -o $@.tmp -a 1 -l 1024 \
 		$(if $(findstring sdmmc,$1), \
@@ -34,8 +40,17 @@ define Build/mt7986-gpt
 		$(if $(findstring emmc,$1), \
 			-t 0x2e -N production		-p $(CONFIG_TARGET_ROOTFS_PARTSIZE)M@64M \
 		)
+	@if [[ ! -f $@.tmp ]];then\
+		echo "[---Rise---] $@.tmp not exists!";\
+		exit -1;\
+	fi
 	cat $@.tmp >> $@
+	@if [[ ! -f $@ ]];then\
+		echo "[---Rise---] $@ not exists!";\
+		exit -1;\
+	fi
 	rm $@.tmp
+	@echo "[---Rise---] mt7986 gpt done!"
 endef
 
 define Device/bananapi_bpi-r3
@@ -63,19 +78,19 @@ define Device/bananapi_bpi-r3
 				   pad-to 17k | bl2 sdmmc-ddr4 |\
 				   pad-to 6656k | bl31-uboot bananapi_bpi-r3-sdmmc |\
 				$(if $(CONFIG_TARGET_ROOTFS_INITRAMFS),\
-				   pad-to 12M | append-image-stage initramfs-recovery.itb | check-size 44m |\
+				   pad-to 12M | append-image-stage initramfs-recovery.itb | check-size 64m |\
 				) \
-				   pad-to 44M | bl2 spim-nand-ddr4 |\
-				   pad-to 45M | bl31-uboot bananapi_bpi-r3-snand |\
-				   pad-to 49M | bl2 nor-ddr4 |\
-				   pad-to 50M | bl31-uboot bananapi_bpi-r3-nor |\
-				   pad-to 51M | bl2 emmc-ddr4 |\
-				   pad-to 52M | bl31-uboot bananapi_bpi-r3-emmc |\
-				   pad-to 56M | mt7986-gpt emmc |\
+				   pad-to 64M | bl2 spim-nand-ddr4 |\
+				   pad-to 65M | bl31-uboot bananapi_bpi-r3-snand |\
+				   pad-to 69M | bl2 nor-ddr4 |\
+				   pad-to 70M | bl31-uboot bananapi_bpi-r3-nor |\
+				   pad-to 71M | bl2 emmc-ddr4 |\
+				   pad-to 72M | bl31-uboot bananapi_bpi-r3-emmc |\
+				   pad-to 76M | mt7986-gpt emmc |\
 				$(if $(CONFIG_TARGET_ROOTFS_SQUASHFS),\
-				   pad-to 64M | append-image squashfs-sysupgrade.itb | check-size | gzip \
+				   pad-to 128M | append-image squashfs-sysupgrade.itb | check-size | gzip \
 				)
-  IMAGE_SIZE := $$(shell expr 64 + $$(CONFIG_TARGET_ROOTFS_PARTSIZE))m
+  IMAGE_SIZE := $$(shell expr 128 + $$(CONFIG_TARGET_ROOTFS_PARTSIZE))m
   KERNEL			:= kernel-bin | gzip
   KERNEL_INITRAMFS := kernel-bin | lzma | \
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd | pad-to 64k

@@ -125,7 +125,14 @@ buildinfo: FORCE
 prepare: .config $(tools/stamp-compile) $(toolchain/stamp-compile)
 	$(_SINGLE)$(SUBMAKE) -r buildinfo
 
-world: prepare $(target/stamp-compile) $(package/stamp-compile) $(package/stamp-install) $(target/stamp-install) FORCE
+debug_world:
+	$(info "Debug World !!!!!!!!!!!!!!!!!!!!!!!!!!!$(target/stamp-install)")
+	$(eval XYZ=$(shell echo "xyz"))
+	echo $(XYZ)
+	$(eval XYZ=$(shell if [[ 1 == 0 ]];then echo "ddddddddd"; else echo "zzzzzz"; fi))
+	echo $(XYZ)
+
+world: debug_world prepare $(target/stamp-compile) $(package/stamp-compile) $(package/stamp-install) $(target/stamp-install) FORCE
 	$(_SINGLE)$(SUBMAKE) -r package/index
 	$(_SINGLE)$(SUBMAKE) -r json_overview_image_info
 	$(_SINGLE)$(SUBMAKE) -r checksum

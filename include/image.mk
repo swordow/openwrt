@@ -160,8 +160,21 @@ DTC_FLAGS += \
   -Wno-unique_unit_address
 
 define Image/pad-to
+	@echo "[---Rise---] Image/pad-to $(1) bs=$(2) ............................................."
+	@if [[ ! -f $(1) ]];then\
+		echo "[---Rise---] $(1) not exist!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";\
+		exit -1;\
+	fi
 	dd if=$(1) of=$(1).new bs=$(2) conv=sync
+	@if [[ ! -f $(1).new ]];then\
+		echo "[---Rise---] After padding $(1).new not exist!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";\
+		exit -1;\
+	fi
 	mv $(1).new $(1)
+	@if [[ ! -f $(1) ]];then\
+		echo "[---Rise---] Move to $(1) not exist!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";\
+		exit -1;\
+	fi
 endef
 
 ROOTFS_PARTSIZE=$(shell echo $$(($(CONFIG_TARGET_ROOTFS_PARTSIZE)*1024*1024)))
